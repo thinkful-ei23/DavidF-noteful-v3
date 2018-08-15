@@ -1,2 +1,1 @@
-Noteful App
-============================
+David's Noteful App
