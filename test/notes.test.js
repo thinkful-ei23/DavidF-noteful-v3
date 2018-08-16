@@ -230,7 +230,6 @@ describe('Noteful API - Notes', function () {
       const updateItem = {
         title: 'An updated title',
         content: 'Updated content',
-        folderId: '111111111111111111111101'
       };
       let note;
       return Note.findOne()
