@@ -140,12 +140,14 @@ describe('Noteful API - Notes', function () {
             'id',
             'title',
             'content',
+            'folderId',
             'createdAt',
             'updatedAt'
           );
           expect(res.body.id).to.equal(data.id);
           expect(res.body.title).to.equal(data.title);
           expect(res.body.content).to.equal(data.content);
+          expect(res.body.folderId).to.equal(data.folderId);
           expect(new Date(res.body.createdAt)).to.eql(data.createdAt);
           expect(new Date(res.body.updatedAt)).to.eql(data.updatedAt);
         });
@@ -227,7 +229,8 @@ describe('Noteful API - Notes', function () {
     it('should find and update an item when given valid data', function () {
       const updateItem = {
         title: 'An updated title',
-        content: 'Updated content'
+        content: 'Updated content',
+        folderId: '111111111111111111111101'
       };
       let note;
       return Note.findOne()
@@ -246,12 +249,14 @@ describe('Noteful API - Notes', function () {
             'id',
             'title',
             'content',
+            'folderId',
             'createdAt',
             'updatedAt'
           );
           expect(res.body.id).to.equal(note.id);
           expect(res.body.title).to.equal(updateItem.title);
           expect(res.body.content).to.equal(updateItem.content);
+          expect(res.body.folderId).to.equal(updateItem.folderId);
           expect(new Date(res.body.createdAt)).to.eql(note.createdAt);
           expect(new Date(res.body.updatedAt)).to.greaterThan(note.updatedAt);
         });
