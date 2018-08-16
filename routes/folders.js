@@ -6,7 +6,8 @@ const mongoose = require('mongoose');
 const { MONGODB_URI } = require('../config');
 
 
-const Folder = require('../models/note');
+const Folder = require('../models/folder');
+const Note = require('../models/note');
 
 const router = express.Router();
 
@@ -62,7 +63,13 @@ router.post('/', (req, res, next) => {
         .status(201)
         .json(result);
     })
-    .catch(err => next(err));
+    .catch(err => {
+      if (err.code === 11000) {
+        err = new Error('The folder name already exists');
+        err.status = 400;
+      }
+      next(err);
+    });
 });
 
 //PUT folder by id to update name
@@ -101,7 +108,14 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Folder.findByIdAndRemove(id)
+  const folderRemovePromise = Folder.findByIdAndRemove(id);
+  const noteRemovePromise = Note.updateMany(
+    { folderId: id },
+    { $unset: { folderId: '' } }
+  );
+
+
+  Promise.all([folderRemovePromise, noteRemovePromise])
     .then(() => res.status(204).end())
     .catch(err => next(err));
 });

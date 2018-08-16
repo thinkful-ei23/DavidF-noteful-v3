@@ -9,7 +9,7 @@
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js",
-		"test": "cross-env NODE_ENV=test mocha --file test/server.js"
+		"test": "cross-env NODE_ENV=test mocha --file test/server.js --timeout 30000"
 	},
 	"dependencies": {
 		"express": "^4.16.3",
