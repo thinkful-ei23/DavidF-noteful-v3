@@ -296,40 +296,39 @@ describe('Noteful API - Notes', function() {
   });
 
   describe('PUT /api/notes/:id', function() {
-    it('should find and update an item when given valid data', function() {
+    it('should update the note when provided valid data', function() {
       const updateItem = {
-        title: 'An updated title',
-        content: 'Updated content',
-        folderId: '111111111111111111111103'
+        title: 'What about dogs?!',
+        content: 'woof woof'
       };
-      let note;
+      let data;
       return Note.findOne()
-        .then(function(_note) {
-          note = _note;
+        .then(_data => {
+          data = _data;
           return chai
             .request(app)
-            .put(`/api/notes/${note.id}`)
+            .put(`/api/notes/${data.id}`)
             .send(updateItem);
         })
         .then(function(res) {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body).to.have.keys(
+          expect(res.body).to.have.all.keys(
             'id',
             'title',
             'content',
-            'folderId',
-            'tags',
             'createdAt',
-            'updatedAt'
+            'updatedAt',
+            'folderId',
+            'tags'
           );
-          expect(res.body.id).to.equal(note.id);
+          expect(res.body.id).to.equal(data.id);
           expect(res.body.title).to.equal(updateItem.title);
           expect(res.body.content).to.equal(updateItem.content);
-          expect(res.body.folderId).to.equal(updateItem.folderId);
-          expect(new Date(res.body.createdAt)).to.eql(note.createdAt);
-          expect(new Date(res.body.updatedAt)).to.greaterThan(note.updatedAt);
+          expect(new Date(res.body.createdAt)).to.eql(data.createdAt);
+          // expect note to have been updated
+          expect(new Date(res.body.updatedAt)).to.greaterThan(data.updatedAt);
         });
     });
 
