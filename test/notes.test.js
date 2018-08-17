@@ -9,9 +9,11 @@ const { TEST_MONGODB_URI } = require('../config');
 
 const Note = require('../models/note');
 const Folder = require('../models/folder');
+const Tag = require('../models/tags');
 
 const seedNotes = require('../db/seed/notes');
 const seedFolders = require('../db/seed/folders');
+const seedTags = require('../db/seed/tags');
 
 const expect = chai.expect;
 chai.use(chaiHttp);
@@ -27,7 +29,9 @@ describe('Noteful API - Notes', function() {
     return (
       Note.insertMany(seedNotes),
       Folder.insertMany(seedFolders),
-      Folder.createIndexes()
+      Tag.insertMany(seedTags),
+      Folder.createIndexes(),
+      Tag.createIndexes()
     );
   });
 
@@ -66,9 +70,10 @@ describe('Noteful API - Notes', function() {
           expect(item).to.include.all.keys(
             'id',
             'title',
-            'folderId',
             'createdAt',
-            'updatedAt'
+            'folderId',
+            'updatedAt',
+            'tags'
           );
           expect(item.id).to.equal(data[i].id);
           expect(item.title).to.equal(data[i].title);
@@ -100,7 +105,8 @@ describe('Noteful API - Notes', function() {
             'id',
             'title',
             'createdAt',
-            'updatedAt'
+            'updatedAt',
+            'tags'
           );
           expect(item.id).to.equal(data[i].id);
           expect(item.title).to.equal(data[i].title);
@@ -134,7 +140,8 @@ describe('Noteful API - Notes', function() {
             'id',
             'title',
             'createdAt',
-            'updatedAt'
+            'updatedAt',
+            'tags'
           );
           expect(item.id).to.equal(data[i].id);
           expect(item.title).to.equal(data[i].title);

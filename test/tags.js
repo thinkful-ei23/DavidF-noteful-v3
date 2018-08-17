@@ -156,7 +156,7 @@ describe('Noteful API - Tags', function() {
     });
   });
 
-  describe('POST /api/folders', function() {
+  describe('POST /api/tags', function() {
     it('should create and return a new folder when provided valid data', function() {
       const newTag = { name: 'thoroughbred' };
 
