@@ -73,7 +73,7 @@ describe('Noteful API - Notes', function() {
           expect(item.id).to.equal(data[i].id);
           expect(item.title).to.equal(data[i].title);
           expect(item.content).to.equal(data[i].content);
-          expect(item.folderId).to.equal(data[i].folderId + '');
+          expect(item.folderId).to.equal(data[i].folderId.toString());
           expect(new Date(item.createdAt)).to.eql(data[i].createdAt);
           expect(new Date(item.updatedAt)).to.eql(data[i].updatedAt);
         });
@@ -105,7 +105,7 @@ describe('Noteful API - Notes', function() {
           expect(item.id).to.equal(data[i].id);
           expect(item.title).to.equal(data[i].title);
           expect(item.content).to.equal(data[i].content);
-          expect(item.folderId).to.equal(data[i].folderId + '');
+          expect(item.folderId).to.equal(data[i].folderId.toString());
           expect(new Date(item.createdAt)).to.eql(data[i].createdAt);
           expect(new Date(item.updatedAt)).to.eql(data[i].updatedAt);
         });
@@ -188,7 +188,7 @@ describe('Noteful API - Notes', function() {
           expect(res.body.id).to.equal(data.id);
           expect(res.body.title).to.equal(data.title);
           expect(res.body.content).to.equal(data.content);
-          expect(res.body.folderId).to.equal(data.folderId + '');
+          expect(res.body.folderId).to.equal(data.folderId.toString());
           expect(new Date(res.body.createdAt)).to.eql(data.createdAt);
           expect(new Date(res.body.updatedAt)).to.eql(data.updatedAt);
         });
