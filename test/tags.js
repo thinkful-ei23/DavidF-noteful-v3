@@ -22,7 +22,7 @@ describe('Noteful API - Tags', function() {
   });
 
   beforeEach(function() {
-    return Tag.insertMany(seedTags);
+    return Promise.all([Tag.insertMany(seedTags), Tag.createIndexes()]);
   });
 
   afterEach(function() {
@@ -195,6 +195,23 @@ describe('Noteful API - Tags', function() {
           expect(res.body.message).to.equal('Missing `name` in request body');
         });
     });
+
+    it('should return an error when given a duplicate name', function() {
+      return Tag.findOne()
+        .then(data => {
+          const newItem = { name: data.name };
+          return chai
+            .request(app)
+            .post('/api/tags')
+            .send(newItem);
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('The tag name already exists');
+        });
+    });
   });
 
   describe('PUT /api/tags/:id', function() {
@@ -235,6 +252,18 @@ describe('Noteful API - Tags', function() {
         });
     });
 
+    it('should respond with a 404 for an id that does not exist', function() {
+      const updateItem = { name: 'Blah' };
+      // The string "DOESNOTEXIST" is 12 bytes which is a valid Mongo ObjectId
+      return chai
+        .request(app)
+        .put('/api/tags/DOESNOTEXIST')
+        .send(updateItem)
+        .then(res => {
+          expect(res).to.have.status(404);
+        });
+    });
+
     it('should return an error when missing "name" field', function() {
       const updateTag = {};
       let tag;
@@ -255,10 +284,29 @@ describe('Noteful API - Tags', function() {
           expect(res.body.message).to.equal('Missing `name` in request body');
         });
     });
+
+    it('should return an error when given a duplicate name', function() {
+      return Tag.find()
+        .limit(2)
+        .then(results => {
+          const [item1, item2] = results;
+          item1.name = item2.name;
+          return chai
+            .request(app)
+            .put(`/api/tags/${item1.id}`)
+            .send(item1);
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('The tag name already exists');
+        });
+    });
   });
 
   describe('DELETE /api/tags/:id', function() {
-    it('should delte an existing tag and respond with a 204 status', function() {
+    it('should delete an existing tag and respond with a 204 status', function() {
       let tag;
       return Tag.findOne()
         .then(_tag => {
@@ -271,6 +319,19 @@ describe('Noteful API - Tags', function() {
         })
         .then(count => {
           expect(count).to.equal(0);
+        });
+    });
+
+    it('should return an error with an invalid Id', function() {
+      let tag;
+      return Tag.findOne()
+        .then(_tag => {
+          tag = _tag;
+          return chai.request(app).delete('/api/tags/Not-Valid');
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res.body.message).to.equal('The `id` is not valid');
         });
     });
   });

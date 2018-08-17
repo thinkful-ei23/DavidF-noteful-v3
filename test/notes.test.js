@@ -274,6 +274,40 @@ describe('Noteful API - Notes', function() {
           expect(res.body.message).to.equal('Missing `title` in request body');
         });
     });
+
+    it('should return an error when given an invalid folderId', function() {
+      const newItem = {
+        title: 'new title',
+        folderId: 'Not-Valid'
+      };
+      return chai
+        .request(app)
+        .post('/api/notes')
+        .send(newItem)
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('Invalid `folderId`');
+        });
+    });
+
+    it('should return an error when given an invalid tagId', function() {
+      const newItem = {
+        title: 'new title',
+        tags: ['Not-Valid']
+      };
+      return chai
+        .request(app)
+        .post('/api/notes')
+        .send(newItem)
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('Invalid `tagId`');
+        });
+    });
   });
 
   describe('PUT /api/notes/:id', function() {
@@ -360,6 +394,29 @@ describe('Noteful API - Notes', function() {
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
           expect(res.body.message).to.equal('Missing `title` in request body');
+        });
+    });
+
+    it('should return an error when given an invalid tagId', function() {
+      const updateItem = {
+        title: 'updated title',
+        tags: ['Not-Valid']
+      };
+      let data;
+      return Note.findOne()
+        .then(_data => {
+          data = _data;
+
+          return chai
+            .request(app)
+            .put(`/api/notes/${data.id}`)
+            .send(updateItem);
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('Invalid `tagId`');
         });
     });
   });

@@ -14,27 +14,27 @@ const seedFolders = require('../db/seed/folders');
 const expect = chai.expect;
 chai.use(chaiHttp);
 
-describe('Noteful API - Folders', function () {
-  before(function () {
+describe('Noteful API - Folders', function() {
+  before(function() {
     return mongoose
       .connect(TEST_MONGODB_URI)
       .then(() => mongoose.connection.db.dropDatabase());
   });
 
-  beforeEach(function () {
-    return Folder.insertMany(seedFolders);
+  beforeEach(function() {
+    return Folder.insertMany(seedFolders), Folder.createIndexes();
   });
 
-  afterEach(function () {
+  afterEach(function() {
     return mongoose.connection.db.dropDatabase();
   });
 
-  after(function () {
+  after(function() {
     return mongoose.disconnect();
   });
 
-  describe('GET /api/folders', function () {
-    it('should return the correct number of Notes', function () {
+  describe('GET /api/folders', function() {
+    it('should return the correct number of Notes', function() {
       return Promise.all([
         Folder.find(),
         chai.request(app).get('/api/folders')
@@ -46,7 +46,7 @@ describe('Noteful API - Folders', function () {
       });
     });
 
-    it('should return a list with the correct fields', function () {
+    it('should return a list with the correct fields', function() {
       return Promise.all([
         Folder.find().sort({ updatedAt: 'desc' }),
         chai.request(app).get('/api/folders')
@@ -55,7 +55,7 @@ describe('Noteful API - Folders', function () {
         expect(res).to.be.json;
         expect(res.body).to.be.a('array');
         expect(res.body).to.have.length(data.length);
-        res.body.forEach(function (item, i) {
+        res.body.forEach(function(item, i) {
           expect(item).to.be.a('object');
           expect(item).to.include.all.keys(
             'id',
@@ -71,7 +71,7 @@ describe('Noteful API - Folders', function () {
       });
     });
 
-    it('should return correct search results for a searchTerm query', function () {
+    it('should return correct search results for a searchTerm query', function() {
       const searchTerm = 'Personal';
 
       const dbPromise = Folder.find({
@@ -87,7 +87,7 @@ describe('Noteful API - Folders', function () {
         expect(res).to.be.json;
         expect(res.body).to.be.a('array');
         expect(res.body).to.have.length(1);
-        res.body.forEach(function (item, i) {
+        res.body.forEach(function(item, i) {
           expect(item).to.be.a('object');
           expect(item).to.include.all.keys(
             'id',
@@ -102,7 +102,7 @@ describe('Noteful API - Folders', function () {
         });
       });
     });
-    it('should return an empty array for an incorrect query', function () {
+    it('should return an empty array for an incorrect query', function() {
       const searchTerm = 'NotValid';
       const dbPromise = Folder.find({
         title: { $regex: searchTerm, $options: 'i' }
@@ -119,8 +119,8 @@ describe('Noteful API - Folders', function () {
     });
   });
 
-  describe('GET /api/folders/:id', function () {
-    it('should return correct folder', function () {
+  describe('GET /api/folders/:id', function() {
+    it('should return correct folder', function() {
       let data;
       return Folder.findOne()
         .then(_data => {
@@ -131,12 +131,7 @@ describe('Noteful API - Folders', function () {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys(
-            'id',
-            'name',
-            'createdAt',
-            'updatedAt'
-          );
+          expect(res.body).to.have.keys('id', 'name', 'createdAt', 'updatedAt');
           expect(res.body.id).to.equal(data.id);
           expect(res.body.name).to.equal(data.name);
           expect(new Date(res.body.createdAt)).to.eql(data.createdAt);
@@ -144,7 +139,7 @@ describe('Noteful API - Folders', function () {
         });
     });
 
-    it('should respond with status 400 and an error message when `id` is not valid', function () {
+    it('should respond with status 400 and an error message when `id` is not valid', function() {
       return chai
         .request(app)
         .get('/api/folders/NOT-VALID')
@@ -154,7 +149,7 @@ describe('Noteful API - Folders', function () {
         });
     });
 
-    it('should respond with a 404 for an id that does not exist', function () {
+    it('should respond with a 404 for an id that does not exist', function() {
       return chai
         .request(app)
         .get('/api/folders/DOESNOTEXIST')
@@ -162,8 +157,8 @@ describe('Noteful API - Folders', function () {
     });
   });
 
-  describe('POST /api/folders', function () {
-    it('should create and return a new folder when provided valid data', function () {
+  describe('POST /api/folders', function() {
+    it('should create and return a new folder when provided valid data', function() {
       const newFolder = { name: 'Miscellaneous' };
 
       let res;
@@ -177,12 +172,7 @@ describe('Noteful API - Folders', function () {
           expect(res).to.have.header('location');
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body).to.have.keys(
-            'id',
-            'name',
-            'createdAt',
-            'updatedAt'
-          );
+          expect(res.body).to.have.keys('id', 'name', 'createdAt', 'updatedAt');
           return Folder.findById(res.body.id);
         })
         .then(data => {
@@ -193,7 +183,7 @@ describe('Noteful API - Folders', function () {
         });
     });
 
-    it('should return an error when missing "name" field', function () {
+    it('should return an error when missing "name" field', function() {
       const newFolder = {};
       return chai
         .request(app)
@@ -206,10 +196,27 @@ describe('Noteful API - Folders', function () {
           expect(res.body.message).to.equal('Missing `name` in request body');
         });
     });
+
+    it('should return an error when given a duplicate name', function() {
+      return Folder.findOne()
+        .then(data => {
+          const newItem = { name: data.name };
+          return chai
+            .request(app)
+            .post('/api/folders')
+            .send(newItem);
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('The folder name already exists');
+        });
+    });
   });
 
-  describe('PUT /api/folders/:id', function () {
-    it('should find and update a folder when given valid data', function () {
+  describe('PUT /api/folders/:id', function() {
+    it('should find and update a folder when given valid data', function() {
       const updateFolder = { name: 'Stuff' };
 
       let folder;
@@ -225,12 +232,7 @@ describe('Noteful API - Folders', function () {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body).to.have.keys(
-            'id',
-            'name',
-            'createdAt',
-            'updatedAt'
-          );
+          expect(res.body).to.have.keys('id', 'name', 'createdAt', 'updatedAt');
           expect(res.body.id).to.equal(folder.id);
           expect(res.body.name).to.equal(updateFolder.name);
           expect(new Date(res.body.createdAt)).to.eql(folder.createdAt);
@@ -238,7 +240,7 @@ describe('Noteful API - Folders', function () {
         });
     });
 
-    it('should respond with status 400 and an error message when `id` is not valid', function () {
+    it('should respond with status 400 and an error message when `id` is not valid', function() {
       const updateFolder = { name: 'I\'m an updated Folder' };
 
       return chai
@@ -251,7 +253,7 @@ describe('Noteful API - Folders', function () {
         });
     });
 
-    it('should return an error when missing "name" field', function () {
+    it('should return an error when missing "name" field', function() {
       const updateFolder = {};
       let folder;
 
@@ -273,8 +275,8 @@ describe('Noteful API - Folders', function () {
     });
   });
 
-  describe('DELETE /api/folders/:id', function () {
-    it('should delte an existing folder and respond with a 204 status', function () {
+  describe('DELETE /api/folders/:id', function() {
+    it('should delte an existing folder and respond with a 204 status', function() {
       let folder;
       return Folder.findOne()
         .then(_folder => {
@@ -287,6 +289,19 @@ describe('Noteful API - Folders', function () {
         })
         .then(count => {
           expect(count).to.equal(0);
+        });
+    });
+
+    it('should return an error with an invalid Id', function() {
+      let folder;
+      return Folder.findOne()
+        .then(_folder => {
+          folder = _folder;
+          return chai.request(app).delete('/api/folders/Not-Valid');
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res.body.message).to.equal('The `id` is not valid');
         });
     });
   });
