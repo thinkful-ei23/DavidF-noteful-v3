@@ -86,21 +86,36 @@ describe('Noteful API - Notes', function() {
     });
 
     it('should return correct search results for a folderId query', function() {
-      let data;
-      return Folder.findOne()
-        .then(_data => {
-          data = _data;
-          return Promise.all([
-            Note.find({ folderId: data.id }),
-            chai.request(app).get(`/api/notes?folderId=${data.id}`)
-          ]);
-        })
-        .then(([data, res]) => {
-          expect(res).to.have.status(200);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('array');
-          expect(res.body).to.have.length(data.length);
+      const folderSearch = '111111111111111111111103';
+      const dbPromise = Note.find({
+        folderId: folderSearch
+      });
+      const apiPromise = chai
+        .request(app)
+        .get(`/api/notes?folderId=${folderSearch}`);
+
+      return Promise.all([dbPromise, apiPromise]).then(([data, res]) => {
+        expect(res).to.have.status(200);
+        expect(res).to.be.json;
+        expect(res.body).to.be.a('array');
+        expect(res.body).to.have.length(1);
+        res.body.forEach(function(item, i) {
+          expect(item).to.be.a('object');
+          expect(item).to.include.all.keys(
+            'id',
+            'title',
+            'createdAt',
+            'updatedAt',
+            'tags'
+          );
+          expect(item.id).to.equal(data[i].id);
+          expect(item.title).to.equal(data[i].title);
+          expect(item.content).to.equal(data[i].content);
+          expect(item.folderId).to.equal(data[i].folderId.toString());
+          expect(new Date(item.createdAt)).to.eql(data[i].createdAt);
+          expect(new Date(item.updatedAt)).to.eql(data[i].updatedAt);
         });
+      });
     });
 
     it('should return correct search results for a searchTerm query', function() {
@@ -296,39 +311,40 @@ describe('Noteful API - Notes', function() {
   });
 
   describe('PUT /api/notes/:id', function() {
-    it('should update the note when provided valid data', function() {
+    it('should find and update an item when given valid data', function() {
       const updateItem = {
-        title: 'What about dogs?!',
-        content: 'woof woof'
+        title: 'An updated title',
+        content: 'Updated content',
+        folderId: '111111111111111111111103'
       };
-      let data;
+      let note;
       return Note.findOne()
-        .then(_data => {
-          data = _data;
+        .then(function(_note) {
+          note = _note;
           return chai
             .request(app)
-            .put(`/api/notes/${data.id}`)
+            .put(`/api/notes/${note.id}`)
             .send(updateItem);
         })
         .then(function(res) {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body).to.have.all.keys(
+          expect(res.body).to.have.keys(
             'id',
             'title',
             'content',
-            'createdAt',
-            'updatedAt',
             'folderId',
-            'tags'
+            'tags',
+            'createdAt',
+            'updatedAt'
           );
-          expect(res.body.id).to.equal(data.id);
+          expect(res.body.id).to.equal(note.id);
           expect(res.body.title).to.equal(updateItem.title);
           expect(res.body.content).to.equal(updateItem.content);
-          expect(new Date(res.body.createdAt)).to.eql(data.createdAt);
-          // expect note to have been updated
-          expect(new Date(res.body.updatedAt)).to.greaterThan(data.updatedAt);
+          expect(res.body.folderId).to.equal(updateItem.folderId);
+          expect(new Date(res.body.createdAt)).to.eql(note.createdAt);
+          expect(new Date(res.body.updatedAt)).to.greaterThan(note.updatedAt);
         });
     });
 
@@ -381,28 +397,28 @@ describe('Noteful API - Notes', function() {
         });
     });
 
-    // it('should return an error when given an invalid tagId', function() {
-    //   const updateItem = {
-    //     title: 'updated title',
-    //     tags: ['Not-Valid']
-    //   };
-    //   let data;
-    //   return Note.findOne()
-    //     .then(_data => {
-    //       data = _data;
+    it('should return an error when given an invalid tagId', function() {
+      const updateItem = {
+        title: 'updated title',
+        tags: ['Not-Valid']
+      };
+      let data;
+      return Note.findOne()
+        .then(_data => {
+          data = _data;
 
-    //       return chai
-    //         .request(app)
-    //         .put(`/api/notes/${data.id}`)
-    //         .send(updateItem);
-    //     })
-    //     .then(res => {
-    //       expect(res).to.have.status(400);
-    //       expect(res).to.be.json;
-    //       expect(res.body).to.be.a('object');
-    //       expect(res.body.message).to.equal('Invalid `tagId`');
-    //     });
-    // });
+          return chai
+            .request(app)
+            .put(`/api/notes/${data.id}`)
+            .send(updateItem);
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('Invalid `tagId`');
+        });
+    });
   });
 
   describe('DELETE /api/notes/:id', function() {
