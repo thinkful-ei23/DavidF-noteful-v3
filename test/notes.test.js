@@ -182,6 +182,7 @@ describe('Noteful API - Notes', function() {
             'title',
             'content',
             'folderId',
+            'tags',
             'createdAt',
             'updatedAt'
           );
@@ -236,6 +237,7 @@ describe('Noteful API - Notes', function() {
             'id',
             'title',
             'content',
+            'tags',
             'createdAt',
             'updatedAt'
           );
@@ -292,6 +294,7 @@ describe('Noteful API - Notes', function() {
             'title',
             'content',
             'folderId',
+            'tags',
             'createdAt',
             'updatedAt'
           );
