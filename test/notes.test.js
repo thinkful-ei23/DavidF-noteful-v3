@@ -26,13 +26,13 @@ describe('Noteful API - Notes', function() {
   });
 
   beforeEach(function() {
-    return (
+    return Promise.all([
       Note.insertMany(seedNotes),
       Folder.insertMany(seedFolders),
       Tag.insertMany(seedTags),
       Folder.createIndexes(),
       Tag.createIndexes()
-    );
+    ]);
   });
 
   afterEach(function() {
