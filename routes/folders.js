@@ -2,14 +2,20 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
+const passport = require('passport');
 
 const { MONGODB_URI } = require('../config');
-
 
 const Folder = require('../models/folder');
 const Note = require('../models/note');
 
 const router = express.Router();
+
+// Protect endpoints using JWT Strategy
+router.use(
+  '/',
+  passport.authenticate('jwt', { session: false, failWithError: true })
+);
 
 //GET all folders
 router.get('/', (req, res, next) => {
@@ -59,7 +65,8 @@ router.post('/', (req, res, next) => {
 
   Folder.create(newFolder)
     .then(result => {
-      res.location(`${req.originalUrl}/${result.id}`)
+      res
+        .location(`${req.originalUrl}/${result.id}`)
         .status(201)
         .json(result);
     })
@@ -113,7 +120,6 @@ router.delete('/:id', (req, res, next) => {
     { folderId: id },
     { $unset: { folderId: '' } }
   );
-
 
   Promise.all([folderRemovePromise, noteRemovePromise])
     .then(() => res.status(204).end())

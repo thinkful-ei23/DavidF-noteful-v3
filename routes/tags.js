@@ -2,6 +2,7 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
+const passport = require('passport');
 
 const { MONGODB_URI } = require('../config');
 
@@ -9,6 +10,12 @@ const Tag = require('../models/tags');
 const Note = require('../models/note');
 
 const router = express.Router();
+
+// Protect endpoints using JWT Strategy
+router.use(
+  '/',
+  passport.authenticate('jwt', { session: false, failWithError: true })
+);
 
 //Get all tags and sort by name
 router.get('/', (req, res, next) => {

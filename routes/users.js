@@ -1,13 +1,17 @@
 'use strict';
 
 const express = require('express');
-const mongoose = require('mongoose');
-
-const { MONGODB_URI } = require('../config');
 
 const User = require('../models/user');
+const passport = require('passport');
 
 const router = express.Router();
+
+// Protect endpoints using JWT Strategy
+router.use(
+  '/',
+  passport.authenticate('jwt', { session: false, failWithError: true })
+);
 
 //POST a new user
 router.post('/', (req, res, next) => {

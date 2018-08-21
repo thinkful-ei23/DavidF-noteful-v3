@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const localStrategy = require('./passport/local');
+const jwtStrategy = require('./passport/jwt');
 
 const { PORT, MONGODB_URI } = require('./config');
 
@@ -16,6 +17,7 @@ const authRouter = require('./routes/auth');
 
 // Configure Passport to use the strategy
 passport.use(localStrategy);
+passport.use(jwtStrategy);
 
 // Create an Express application
 const app = express();
