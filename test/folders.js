@@ -67,7 +67,7 @@ describe('Noteful API - Folders', function() {
 
     it('should return a list with the correct fields', function() {
       return Promise.all([
-        Folder.find().sort({ updatedAt: 'desc' }),
+        Folder.find({ userId: user.id }).sort('name'),
         chai
           .request(app)
           .get('/api/folders')
