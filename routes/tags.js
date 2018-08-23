@@ -4,8 +4,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const passport = require('passport');
 
-const { MONGODB_URI } = require('../config');
-
 const Tag = require('../models/tags');
 const Note = require('../models/note');
 
@@ -20,7 +18,8 @@ router.use(
 //Get all tags and sort by name
 router.get('/', (req, res, next) => {
   const { searchTerm } = req.query;
-  let filter = {};
+  const userId = req.user.id;
+  let filter = { userId };
 
   if (searchTerm) {
     filter.name = { $regex: searchTerm, $options: 'i' };
@@ -35,6 +34,7 @@ router.get('/', (req, res, next) => {
 //Get tag by id
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
@@ -42,7 +42,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Tag.findById(id)
+  Tag.findOne({ _id: id, userId })
     .then(result => {
       result ? res.json(result) : next();
     })
@@ -52,6 +52,7 @@ router.get('/:id', (req, res, next) => {
 //Post a new tag
 router.post('/', (req, res, next) => {
   const { name } = req.body;
+  const userId = req.user.id;
 
   if (!name) {
     const err = new Error('Missing `name` in request body');
@@ -59,7 +60,7 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
-  const newTag = { name };
+  const newTag = { name, userId };
 
   Tag.create(newTag)
     .then(result => {
@@ -81,6 +82,7 @@ router.post('/', (req, res, next) => {
 router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
@@ -96,7 +98,7 @@ router.put('/:id', (req, res, next) => {
 
   const updateTag = { name };
 
-  Tag.findByIdAndUpdate(id, updateTag, { new: true })
+  Tag.findOneAndUpdate({ _id: id, userId }, updateTag, { new: true })
     .then(result => (result ? res.json(result) : next()))
     .catch(err => {
       if (err.code === 11000) {
@@ -110,6 +112,7 @@ router.put('/:id', (req, res, next) => {
 // DELETE a tag by id
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
@@ -117,10 +120,10 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const tagRemovePromise = Tag.findByIdAndRemove(id);
+  const tagRemovePromise = Tag.findOneAndRemove({ _id: id, userId });
   const noteRemovePromise = Note.updateMany(
-    {},
-    { $pull: { tags: { $in: [id] } } }
+    { tags: id, userId },
+    { $pull: { tags: id } }
   );
 
   Promise.all([tagRemovePromise, noteRemovePromise])

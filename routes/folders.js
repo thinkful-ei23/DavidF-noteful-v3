@@ -4,8 +4,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const passport = require('passport');
 
-const { MONGODB_URI } = require('../config');
-
 const Folder = require('../models/folder');
 const Note = require('../models/note');
 
@@ -20,7 +18,8 @@ router.use(
 //GET all folders
 router.get('/', (req, res, next) => {
   const { searchTerm } = req.query;
-  let filter = {};
+  const userId = req.user.id;
+  let filter = { userId };
 
   if (searchTerm) {
     filter.name = { $regex: searchTerm, $options: 'i' };
@@ -37,6 +36,7 @@ router.get('/', (req, res, next) => {
 //GET folder by id
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
@@ -44,7 +44,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Folder.findById(id)
+  Folder.findOne({ _id: id, userId })
     .then(result => {
       result ? res.json(result) : next();
     })
@@ -54,6 +54,7 @@ router.get('/:id', (req, res, next) => {
 //POST a new folder
 router.post('/', (req, res, next) => {
   const { name } = req.body;
+  const userId = req.user.id;
 
   if (!name) {
     const err = new Error('Missing `name` in request body');
@@ -61,7 +62,7 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
-  const newFolder = { name };
+  const newFolder = { name, userId };
 
   Folder.create(newFolder)
     .then(result => {
@@ -83,6 +84,7 @@ router.post('/', (req, res, next) => {
 router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
@@ -98,7 +100,7 @@ router.put('/:id', (req, res, next) => {
 
   const updateFolder = { name };
 
-  Folder.findByIdAndUpdate(id, updateFolder, { new: true })
+  Folder.findOneAndUpdate({ _id: id, userId }, updateFolder, { new: true })
     .then(result => {
       result ? res.json(result) : next();
     })
@@ -108,6 +110,7 @@ router.put('/:id', (req, res, next) => {
 //DELETE a folder by id
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
@@ -115,9 +118,9 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const folderRemovePromise = Folder.findByIdAndRemove(id);
+  const folderRemovePromise = Folder.findOneAndRemove({ _id: id, userId });
   const noteRemovePromise = Note.updateMany(
-    { folderId: id },
+    { folderId: id, userId },
     { $unset: { folderId: '' } }
   );
 
