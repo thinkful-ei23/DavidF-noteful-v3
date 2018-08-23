@@ -1,4 +1,5 @@
 'use strict';
+/* global newNote */
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -14,6 +15,7 @@ function validateFolderId(folderId, userId) {
   if (folderId === undefined) {
     return Promise.resolve();
   }
+
   if (!mongoose.Types.ObjectId.isValid(folderId)) {
     const err = new Error('The `folderId` is not valid');
     err.status = 400;
@@ -126,9 +128,13 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
+  if (newNote.folderId === '') {
+    delete newNote.folderId;
+  }
+
   Promise.all([
-    validateFolderId(folderId, userId),
-    validateTagIds(tags, userId)
+    validateFolderId(newNote.folderId, userId),
+    validateTagIds(newNote.tags, userId)
   ])
     .then(() => Note.create(newNote))
     .then(result => {
@@ -163,8 +169,8 @@ router.put('/:id', (req, res, next) => {
   }
 
   Promise.all([
-    validateFolderId(folderId, userId),
-    validateTagIds(tags, userId)
+    validateFolderId(updateNote.folderId, userId),
+    validateTagIds(updateNote.tags, userId)
   ])
     .then(() => {
       return Note.findOneAndUpdate({ _id: id, userId }, updateNote, {
