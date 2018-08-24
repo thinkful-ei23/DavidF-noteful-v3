@@ -23,6 +23,8 @@ const noteful = (function() {
   }
 
   function render() {
+    // if(localStorage.getItem('authToken'));
+
     $('.signup-login').toggle(!store.authorized);
 
     const notesList = generateNotesList(store.notes, store.currentNote);
@@ -438,6 +440,7 @@ const noteful = (function() {
         .then(response => {
           store.authToken = response.authToken;
           store.authorized = true;
+          localStorage.setItem('authToken', store.authToken);
           loginForm[0].reset();
 
           return Promise.all([
